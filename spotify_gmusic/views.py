@@ -19,13 +19,33 @@ def authenticate(request):
 	scope = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative'
 	auth_url = 'https://accounts.spotify.com/authorize?'
 	sid = random_string(16)
+	request.session['sid'] = sid
 	auth_query = {'response_type' : 'code', 'client_id' : client_id, \
-				'scope' : scope, 'redirect_uri' : redirect_uri, 'sid' : sid}
+				'scope' : scope, 'redirect_uri' : redirect_uri, 'state' : sid}
 	auth_url += urllib.parse.urlencode(auth_query)
 	print(auth_url)
 	return HttpResponseRedirect(auth_url)
 
 def process(request):
-	print(request)
-	return render(request, 'spotify_gmusic/process_auth.html')
+	code, sid = request.GET.get('code'), request.GET.get('state')
+	stored_sid = request.session.get('sid')
+	if stored_sid != sid:
+		print('State mismatch - try the whole process again.')
+	token_url = 'https://accounts.spotify.com/api/token'
+    # authOptions = {
+    #   url: 'https://accounts.spotify.com/api/token',
+    #   form: {
+    #     code: code,
+    #     redirect_uri: redirect_uri,
+    #     grant_type: 'authorization_code'
+    #   },
+    #   headers: {
+    #     'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+    #   },
+    #   json: true
+    # };
+	print(code, sid, stored_sid)
+	print()
+	print(request.GET)
+	return render(request, 'spotify_gmusic/process_auth.html', {'code' : code, 'sid' : sid, 'stored_sid' : stored_sid})
 
